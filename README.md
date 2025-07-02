@@ -1,6 +1,6 @@
 # E-commerce Platform
 
-This is a full-featured e-commerce platform built with [Next.js](https://nextjs.org) and bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). It was developed to showcase the implementation of a modern, feature-rich web application.
+This is a full-featured e-commerce platform built with [Next.js](https://nextjs.org) and bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). It was developed to showcase the implementation of a modern, feature-rich web application for the [DevAcademy-Ecommerce Web API](https://github.com/bernardo-msft/DevAcademy-Ecommerce).
 
 ## Project Overview
 
@@ -82,19 +82,3 @@ The codebase is organized into the following directories:
 |-- /lib/           # Utility functions and libraries
 `-- /services/      # API service layer for fetching data
 ```
-
-## Getting Started
-
-First, set up the environment variables by creating a `.env.local` file from `.env.example` (if provided).
-
-Then, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
