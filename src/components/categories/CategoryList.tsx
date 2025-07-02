@@ -45,19 +45,20 @@ export function CategoryList({ onSelectCategory, selectedCategoryId }: CategoryL
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold tracking-tight mb-4">Categories</h2>
-      <div className="flex flex-wrap gap-2">
-        <Button 
-            variant={selectedCategoryId === null ? "default" : "outline"}
-            onClick={() => onSelectCategory(null)}
+      <div className="flex flex-wrap justify-center gap-4">
+        <Button
+          variant={selectedCategoryId === null ? "default" : "outline"}
+          onClick={() => onSelectCategory(null)}
+          className="px-8 py-3 text-lg hover:cursor-pointer"
         >
-            All
+          All
         </Button>
         {categories.map((category) => (
-          <Button 
-            key={category.id} 
+          <Button
+            key={category.id}
             variant={selectedCategoryId === category.id ? "default" : "outline"}
             onClick={() => onSelectCategory(category.id)}
+            className="px-8 py-3 text-lg hover:cursor-pointer"
           >
             {category.name}
           </Button>

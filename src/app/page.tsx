@@ -1,145 +1,158 @@
-import Link from "next/link";
+"use client";
+
+import { useState, useEffect, Suspense, MouseEvent as ReactMouseEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { getProducts, searchProducts, getCategories } from "@/services/api";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ArrowRight, ShoppingCart, Truck, Award } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { CategoryList } from "@/components/categories/CategoryList";
+import { useCart } from "@/contexts/CartContext";
 
-export default function Home() {
-  const featuredProducts = [
-    {
-      name: "Smart Watch",
-      price: "$299",
-      image: "https://placehold.co/400x300/E5E7EB/4B5563?text=Smart+Watch",
-    },
-    {
-      name: "Wireless Earbuds",
-      price: "$149",
-      image: "https://placehold.co/400x300/D1D5DB/374151?text=Earbuds",
-    },
-    {
-      name: "VR Headset",
-      price: "$499",
-      image: "https://placehold.co/400x300/9CA3AF/1F2937?text=VR+Headset",
-    },
-  ];
+interface Product {
+    id: number;
+    name: string;
+    price: number;
+    categoryName: string;
+    stockQuantity: number;
+    imageUrl?: string | null;
+}
 
-  return (
-    <main className="flex-1">
-      {/* Hero Section */}
-      <section className="w-full pt-24 md:pt-32 lg:pt-40 border-y">
-        <div className="px-4 md:px-6 space-y-10 xl:space-y-16">
-          <div className="grid max-w-[1300px] mx-auto gap-4 px-4 sm:px-6 md:px-10 md:grid-cols-2 md:gap-16">
-            <div>
-              <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
-                Discover the Future of Tech
-              </h1>
-              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
-                Explore our curated collection of cutting-edge gadgets and
-                accessories designed to elevate your lifestyle.
-              </p>
-              <div className="space-x-4 mt-6">
-                <Link href="/products">
-                  <Button size="lg">
-                    Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <img
-                src="https://placehold.co/600x400/?text=Hero+Product"
-                alt="Hero Product"
-                className="w-full max-w-md"
-              />
-            </div>
-          </div>
+interface Category {
+    id: number;
+    name: string;
+}
+
+function HomeContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('q');
+    const categoryId = searchParams.get('categoryId');
+    const { addToCart, isLoading: isCartLoading } = useCart();
+
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [title, setTitle] = useState("Our Products");
+
+    const handleAddToCart = (e: ReactMouseEvent<HTMLButtonElement>, productId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToCart(productId.toString(), 1);
+    };
+
+    useEffect(() => {
+        const fetchProductsAndTitle = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                let data;
+                let pageTitle = "Our Products";
+
+                if (searchQuery) {
+                    data = await searchProducts(searchQuery, categoryId);
+                    pageTitle = `Search results for "${searchQuery}"`;
+                } else {
+                    data = await getProducts(categoryId);
+                }
+
+                if (categoryId) {
+                    const categories: Category[] = await getCategories();
+                    const category = categories.find(c => c.id === parseInt(categoryId));
+                    if (category) {
+                        if (searchQuery) {
+                            pageTitle += ` in ${category.name}`;
+                        } else {
+                            pageTitle = `Products in ${category.name}`;
+                        }
+                    }
+                }
+                
+                setTitle(pageTitle);
+                setProducts(data);
+            } catch (err: any) {
+                setError(err.message || "Failed to fetch products.");
+                setProducts([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProductsAndTitle();
+    }, [searchQuery, categoryId]);
+
+    const handleSelectCategory = (selectedCategoryId: number | null) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (selectedCategoryId !== null) {
+            params.set('categoryId', String(selectedCategoryId));
+        } else {
+            params.delete('categoryId');
+        }
+        router.push(`/?${params.toString()}`);
+    };
+
+    if (isLoading) {
+        return <div className="container mx-auto py-10 text-center">Loading products...</div>;
+    }
+
+    if (error) {
+        return <div className="container mx-auto py-10 text-center text-red-500">Error: {error}</div>;
+    }
+
+    return (
+        <div className="container mx-auto py-24 sm:py-32">
+            <CategoryList 
+                onSelectCategory={handleSelectCategory}
+                selectedCategoryId={categoryId ? parseInt(categoryId, 10) : null}
+            />
+            <h1 className="text-3xl font-bold tracking-tight mb-8">{title}</h1>
+            {products.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {products.map((product) => (
+                        <Link href={`/products/${product.id}`} key={product.id} className="flex">
+                            <Card className="flex flex-col w-full hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <CardTitle>{product.name}</CardTitle>
+                                    <CardDescription>{product.categoryName}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow flex flex-col justify-between">
+                                    <div>
+                                        <div className="bg-muted w-full h-40 rounded-md mb-4 flex items-center justify-center">
+                                            {product.imageUrl ? (
+                                                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-md" />
+                                            ) : (
+                                                <span className="text-muted-foreground">No Image</span>
+                                            )}
+                                        </div>
+                                        <p className="text-xl font-semibold mb-4">${product.price.toFixed(2)}</p>
+                                    </div>
+                                    <Button 
+                                        className="w-full mt-auto" 
+                                        onClick={(e) => handleAddToCart(e, product.id)}
+                                        disabled={isCartLoading || product.stockQuantity === 0}
+                                    >
+                                        <ShoppingCart className="mr-2 h-4 w-4" />
+                                        {isCartLoading ? 'Adding...' : (product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart')}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-10">
+                    <p className="text-muted-foreground">No products found.</p>
+                </div>
+            )}
         </div>
-      </section>
+    );
+}
 
-      {/* Featured Products Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container mx-auto px-4 md:px-6">
-          <h2 className="text-3xl font-bold tracking-tighter text-center mb-10">
-            Featured Products
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-60 object-cover rounded-md mb-4"
-                  />
-                  <h3 className="text-xl font-semibold">{product.name}</h3>
-                  <p className="text-lg text-muted-foreground mt-1">
-                    {product.price}
-                  </p>
-                  <Button className="w-full mt-4">
-                    <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-        <div className="container mx-auto grid items-center justify-center gap-4 px-4 text-center md:px-6">
-          <div className="space-y-3">
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-              Why MyStore?
-            </h2>
-            <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              We offer the best products with a focus on quality, speed, and
-              customer satisfaction.
-            </p>
-          </div>
-          <div className="mx-auto w-full max-w-sm space-y-2">
-            <div className="grid grid-cols-3 gap-4 mt-8">
-              <div className="flex flex-col items-center gap-2">
-                <Truck className="h-8 w-8" />
-                <p className="font-semibold">Fast Shipping</p>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <Award className="h-8 w-8" />
-                <p className="font-semibold">Premium Quality</p>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <ShoppingCart className="h-8 w-8" />
-                <p className="font-semibold">Huge Selection</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container mx-auto grid items-center justify-center gap-4 px-4 text-center md:px-6">
-          <div className="space-y-3">
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-              Stay Updated
-            </h2>
-            <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Subscribe to our newsletter to get the latest news on our
-              products and promotions.
-            </p>
-          </div>
-          <div className="mx-auto w-full max-w-sm space-y-2">
-            <form className="flex space-x-2">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="max-w-lg flex-1"
-              />
-              <Button type="submit">Subscribe</Button>
-            </form>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+export default function HomePage() {
+    return (
+        <Suspense fallback={<div className="container mx-auto py-10 text-center">Loading...</div>}>
+            <HomeContent />
+        </Suspense>
+    );
 }

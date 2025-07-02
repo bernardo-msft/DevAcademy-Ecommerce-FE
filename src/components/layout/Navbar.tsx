@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { logoutUserApi } from "@/services/api";
-import { ShoppingCart, Package, Info, Mountain, LayoutGrid, ShieldCheck, Search } from "lucide-react";
+import { ShoppingCart, Package, Info, Mountain, LayoutGrid, ShieldCheck, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "../theme-toggle";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ export function Navbar() {
     if (e.key === 'Enter' && searchQuery.trim() !== '') {
       const params = new URLSearchParams(searchParams.toString());
       params.set('q', searchQuery.trim());
-      router.push(`/products?${params.toString()}`);
+      router.push(`/?${params.toString()}`);
       setSearchQuery(""); // Clear the input field after search
     }
   };
@@ -72,13 +72,6 @@ export function Navbar() {
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link
-              href="/products"
-              className="flex items-center gap-1.5 transition-colors hover:text-foreground text-muted-foreground"
-            >
-              <Package className="h-4 w-4" />
-              Products
-            </Link>
             <div className="relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -94,61 +87,84 @@ export function Navbar() {
 
           <div className="flex-1 flex justify-end">
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href="/cart">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="sr-only">Cart</span>
-                  </Link>
-                </Button>
-                {itemCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                    {itemCount}
-                  </span>
-                )}
-              </div>
-              {user && user.role === "Admin" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="secondary">
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      <span>Manage</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/products">Products</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/categories">Categories</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/orders">Orders</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/reports">Reports</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
               {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">{user.name}</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders">My Orders</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <>
+                  <div className="relative">
+                    <Button variant="outline" size="icon" className="rounded-full" asChild>
+                      <Link href="/cart">
+                        <ShoppingCart className="h-5 w-5" />
+                        <span className="sr-only">Cart</span>
+                      </Link>
+                    </Button>
+                    {itemCount > 0 && (
+                      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                        {itemCount}
+                      </span>
+                    )}
+                  </div>
+                  {user.role === "Admin" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" className="rounded-full cursor-pointer">
+                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          <span>Manage</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/products">Products</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/categories">Categories</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/orders">Orders</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/reports">Reports</Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-full cursor-pointer">
+                        <User className="h-5 w-5" />
+                        <span className="sr-only">User menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href="/orders">My Orders</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : (
-                <Button asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/register">Register</Link>
+                  </Button>
+                  <div className="relative">
+                    <Button variant="outline" size="icon" className="rounded-full" asChild>
+                      <Link href="/cart">
+                        <ShoppingCart className="h-5 w-5" />
+                        <span className="sr-only">Cart</span>
+                      </Link>
+                    </Button>
+                    {itemCount > 0 && (
+                      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                        {itemCount}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
               < ThemeToggle />
             </div>

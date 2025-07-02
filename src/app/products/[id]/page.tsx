@@ -65,7 +65,7 @@ export default function ProductDetailPage() {
 
     return (
         <div className="container mx-auto py-12">
-            <Link href="/products" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-6">
+            <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-6">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Products
             </Link>
